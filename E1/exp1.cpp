@@ -3,6 +3,14 @@
 
 using namespace cv;
 
+uchar* getPixel(const uchar* data, int width, int height, int step, int channels, int x, int y) {
+    if (x < 0 || x >= width || y < 0 || y >= height) {
+        std::cout << "invalid (x, y)\n";
+        return nullptr;
+    }
+    return (uchar*)data + y * step + x * channels;
+}
+
 void getChannel(const uchar* input, int width, int height, int inStep, int inChannels,
     uchar* output, int outStep, int channelToGet) {
     if (channelToGet >= inChannels) {
@@ -13,7 +21,8 @@ void getChannel(const uchar* input, int width, int height, int inStep, int inCha
     for (int y = 0; y < height; ++y, row_out += outStep) {
         uchar* pix_out = row_out;
         for (int x = 0; x < width; ++x, ++pix_out) {
-            *pix_out = *(input + y * inStep + x * inChannels + channelToGet);
+            //*pix_out = *(input + y * inStep + x * inChannels + channelToGet);
+            *pix_out = *(getPixel(input, width, height, inStep, inChannels, x, y) + channelToGet);
         }
     }
 }
@@ -26,8 +35,14 @@ void alphaBlend(const uchar* input, int width, int height, int inStep, int inCha
     for (int y = 0; y < height; ++y, row_out += outStep) {
         uchar* pix_out = row_out;
         for (int x = 0; x < width; ++x, pix_out += outChannels) {
-            double tmp = *(alpha + y * aStep + x) / 255.0;
-            for (int c = 0; c < inChannels; ++c) *(pix_out + c) = tmp * (*(input + y * inStep + x * inChannels + c)) + (1 - tmp) * (*(bg + y * bgStep + x * bgChannels + c));
+            //double tmp = *(alpha + y * aStep + x) / 255.0;
+            double tmp = *getPixel(alpha, width, height, aStep, 1, x, y) / 255.0;
+            for (int c = 0; c < outChannels; ++c) {
+                //*(pix_out + c) = tmp * (*(input + y * inStep + x * inChannels + c)) + (1 - tmp) * (*(bg + y * bgStep + x * bgChannels + c));
+                uchar px_fg = *(getPixel(input, width, height, inStep, inChannels, x, y) + c) * tmp;
+                uchar px_bg = *(getPixel(bg, width, height, bgStep, bgChannels, x, y) + c) * (1 - tmp);
+                *(pix_out + c) = px_fg + px_bg;
+            }
         }
     }
 }
@@ -52,7 +67,7 @@ int main() {
     imshow("alpha", img_alpha);
     waitKey(0);
 
-    Mat img_blend(height, width, CV_8UC4);
+    Mat img_blend(height, width, CV_8UC3);
     alphaBlend(img.data, width, height, img.step, img.channels(),
         bg.data, bg.step, bg.channels(),
         img_alpha.data, img_alpha.step,

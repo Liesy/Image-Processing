@@ -7,6 +7,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
+uchar* getPixel(const uchar* data, int width, int height, int step, int channels, int x, int y);
+
 void getChannel(const uchar* input, int width, int height, int inStep, int inChannels,
     uchar* output, int outStep, int channelToGet);
 
