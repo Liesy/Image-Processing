@@ -6,7 +6,7 @@
 
 uchar sigmoid(const float value, float weight);
 
-void contrastAdjust(uchar* data, int width, int height, int step, int channels, uchar(*func)(const float v, float w));
+void contrastAdjust(uchar* data, int width, int height, int step, int channels, uchar (*func)(const float, float));
 
 void bgSubstract(const uchar* data, const uchar* bg_data,
 	int width, int height, int step, int channels,
